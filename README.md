@@ -1,6 +1,10 @@
 ## aframe-stereocam-component
 
-This component should be attached to an <a-camera> entity. It hunts for a THREE.PerspectiveCamera and modifies the layers it can see.
+<img alt="An image split in half. Left side has: a green floor, a blue cube, and a red sphere. Right side has: a green floor, a red sphere, and a yellow cylinder." src="./in-vr.png">
+
+This is a small component to make meshes meant to be shown to one eye only (in VR), visible outside of VR.
+
+This component should be attached to an <a-camera> entity; it hunts for a THREE.PerspectiveCamera and modifies the layers it can see.
 
 ### properties
 
@@ -17,7 +21,7 @@ not the other (stereo panoramas for instance). This can be done by restricting
 an Object3D to either layer 1 [(visible to the left eye) or layer 2 (visible
 to the right eye)](https://github.com/mrdoob/three.js/blob/0950e5b6e8bceb520c154f45b5c240af45f0ed11/src/renderers/webxr/WebXRManager.js#L41). Nothing wrong with this except that outside of VR the
 camera can only see layer 0. By enabling layer 1 and/or 2, this component
-helps make sure objects are visible outside of VR.
+helps make objects visible outside of VR.
 
 ## usage
 
@@ -132,3 +136,16 @@ Once new features/bug fixes are merged into master.
 ## references
 
 This component is based on Óscar Marín Miró's [aframe-stereo-component](https://github.com/oscarmarinmiro/aframe-stereo-component).
+
+### notes
+
+In three.js, Object3D have a `layers` property that can be used to control visibility.
+
+> ...an object must share a layer with a camera to be visible when that camera's view is renderered. - [three.js docs](https://threejs.org/docs/index.html#api/en/core/Layers)
+
+By default all Object3Ds are a member of layer 0, so everything starts out visible. In VR mode, each eye is represented by a separate camera and [given access to an additional layer](https://github.com/mrdoob/three.js/blob/0950e5b6e8bceb520c154f45b5c240af45f0ed11/src/renderers/webxr/WebXRManager.js#L41):
+
+- the left eye can see layers 0 and 1
+- the right eye can see layers 0 and 2
+
+This makes it easy to do things like show meshes to each eye independently--a necessary trick to [view stereo panoramas](https://github.com/bryik/stereo-panorama-viewer).
