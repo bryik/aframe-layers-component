@@ -11,6 +11,8 @@ not the other (stereo panoramas for instance). This can be done by restricting
 an Object3D to either layer 1 [(visible to the left eye) or layer 2 (visible
 to the right eye)](https://github.com/mrdoob/three.js/blob/0950e5b6e8bceb520c154f45b5c240af45f0ed11/src/renderers/webxr/WebXRManager.js#L41).
 
+- [Demo](https://bryik.github.io/aframe-layers-component/index.html)
+
 ### properties
 
 | Property |                          Description                          | Default Value |
