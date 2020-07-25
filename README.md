@@ -13,9 +13,9 @@ to the right eye)](https://github.com/mrdoob/three.js/blob/0950e5b6e8bceb520c154
 
 ### properties
 
-| Property |                    Description                    | Default Value |
-| :------: | :-----------------------------------------------: | :-----------: |
-|  layers  | An array of layers the entity should have enabled |      "0"      |
+| Property |                          Description                          | Default Value |
+| :------: | :-----------------------------------------------------------: | :-----------: |
+|  layers  | An array of layers the entity should have enabled e.g. "0, 1" |      "0"      |
 
 Note: omitting layer 0 will likely cause your object to disappear (unless you enable additional layers on the camera).
 
