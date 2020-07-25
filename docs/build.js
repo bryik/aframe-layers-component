@@ -2,8 +2,8 @@
 require("aframe");
 require("../index.js");
 
-},{"../index.js":2,"aframe":4}],2:[function(require,module,exports){
-/* global AFRAME, THREE */
+},{"../index.js":2,"aframe":3}],2:[function(require,module,exports){
+/* global AFRAME */
 
 if (typeof AFRAME === "undefined") {
   throw new Error(
@@ -11,308 +11,57 @@ if (typeof AFRAME === "undefined") {
   );
 }
 
-require("./lib/terrainloader.js");
-
 /**
- * Terrain model component.
+ * This component should be attached to an <a-camera> entity. It hunts for a
+ * THREE.PerspectiveCamera and modifies the layers it can see.
+ *
+ * - If 'eye' is 'left': the first layer is enabled i.e. camera.layers.enable(1)
+ * - If 'eye' is 'right': the second layer is enabled i.e. camera.layers.enable(2)
+ * - If 'eye' is 'both': both layers are enabled
+ *
+ * Why is this useful? In VR, sometimes you want to show things to one eye but
+ * not the other (stereo panoramas for instance). This can be done by restricting
+ * an Object3D to either layer 1 (visible to the left eye) or layer 2 (visible
+ * to the right eye) [0]. Nothing wrong with this except that outside of VR the
+ * camera can only see layer 0. By enabling layer 1 and/or 2, this component
+ * ensures objects are visible outside of VR.
+ *
+ * This component is based on oscarmarinmiro's stereo component [1].
+ *
+ * ---
+ *  [0] - This is done by THREE.js's WebXRManager
+ *   https://github.com/mrdoob/three.js/blob/0950e5b6e8bceb520c154f45b5c240af45f0ed11/src/renderers/webxr/WebXRManager.js#L41
+ *  [1] - https://github.com/oscarmarinmiro/aframe-stereo-component
  */
-AFRAME.registerComponent("terrain-model", {
+AFRAME.registerComponent("stereocam", {
   schema: {
-    planeHeight: {
-      type: "number",
-      default: 346,
-    },
-    planeWidth: {
-      type: "number",
-      default: 346,
-    },
-    segmentsHeight: {
-      type: "number",
-      default: 199,
-    },
-    segmentsWidth: {
-      type: "number",
-      default: 199,
-    },
-    zPosition: {
-      type: "number",
-      default: 1.5,
-    },
-    dem: {
-      type: "asset",
-    },
-    map: {
-      type: "asset",
-    },
-    alphaMap: {
-      type: "asset",
-    },
-    wireframe: {
-      type: "boolean",
-      default: false,
-    },
-  },
-
-  init: function () {
-    const el = this.el;
-    const data = this.data;
-
-    this.heightData = null;
-    this.terrainLoader = new THREE.TerrainLoader();
-    this.textureLoader = new THREE.TextureLoader();
-    this._replaceTexture = this._replaceTexture.bind(this);
-    this._updatePositionBuffer = this._updatePositionBuffer.bind(this);
-    this._toggleWireframe = this._toggleWireframe.bind(this);
-
-    // Setup geometry.
-    const { planeWidth, planeHeight, segmentsHeight, segmentsWidth } = data;
-    this.geometry = new THREE.PlaneBufferGeometry(
-      planeWidth,
-      planeHeight,
-      segmentsWidth,
-      segmentsHeight
-    );
-
-    // Setup material.
-    this.material = new THREE.MeshLambertMaterial();
-
-    // Create the terrain mesh; rotate it to be parallel with the ground.
-    this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.mesh.rotation.x = -90 * (Math.PI / 180);
-    el.setObject3D("terrain", this.mesh);
+    eye: { type: "string", default: "left" },
   },
 
   update: function (oldData) {
     const data = this.data;
-    const dem = data.dem;
-    const map = data.map;
-    const alphaMap = data.alphaMap;
-    const zPosition = data.zPosition;
-    const wireframe = data.wireframe;
+    const el = this.el;
 
-    /**
-     * Callback for THREE.TerrainLoader().
-     * @param {number[]} heightData
-     */
-    function onTerrainLoad(heightData) {
-      this.heightData = heightData;
-      this._updatePositionBuffer();
-      this.el.emit("demLoaded", { dem });
-    }
+    const camera = el.object3D.children.find(
+      (c) => c.type === "PerspectiveCamera"
+    );
 
-    /**
-     * This is a curried function that returns a callback to pass to THREE.TextureLoader.load()
-     * This callback updates the terrain material as necessary. 'map' and 'alphaMap'
-     * texture loads are handled almost identically.
-     * @param {string} materialProp either 'map' (for this.material.map) or 'alphaMap' (for this.material.alphaMap)
-     * @returns {function}
-     */
-    const curriedOnTextureLoad = (materialProp) => {
-      return (loadedTexture) => {
-        if (materialProp === "map" && this.data.map !== map) {
-          // The texture took too long to load. The entity now has a different
-          // map, so the map that was loaded cannot be used.
-          loadedTexture.dispose();
-          return;
-        }
-        if (materialProp === "alphaMap" && this.data.alphaMap !== alphaMap) {
-          // Same idea as above, except the loaded texture is an alphaMap.
-          loadedTexture.dispose();
-          return;
-        }
-        loadedTexture.anisotropy = 16;
-        this._replaceTexture(materialProp, loadedTexture);
-        this.el.emit("textureLoaded", { type: materialProp });
-      };
-    };
-
-    if (dem !== oldData.dem) {
-      // DEM has updated, so load the new one.
-      this.terrainLoader.load(dem, onTerrainLoad.bind(this));
-    }
-
-    if (map !== oldData.map) {
-      // When map is not set, it defaults to ""
-      if (!map) {
-        this._replaceTexture("map", null);
-      } else {
-        // Texture has updated, so load the new one.
-        this.textureLoader.load(map, curriedOnTextureLoad("map"));
-      }
-    }
-
-    if (alphaMap !== oldData.alphaMap) {
-      // When alphaMap is not set, it defaults to ""
-      if (!alphaMap) {
-        this._replaceTexture("alphaMap", null);
-      } else {
-        // Alpha map has updated, so load the new one.
-        // Also turn on material transparency.
-        this.material.transparent = true;
-        this.textureLoader.load(alphaMap, curriedOnTextureLoad("alphaMap"));
-      }
-    }
-
-    if (zPosition !== oldData.zPosition) {
-      // zPosition has changed, so re-scale the mesh.
-      this.mesh.scale.set(1, 1, zPosition);
-    }
-
-    if (wireframe !== oldData.wireframe) {
-      // wire mode has either been activated or disactivated.
-      this._toggleWireframe();
-    }
-  },
-
-  /**
-   * A helper for swapping out a material texture.
-   * Ensures the old texture is disposed.
-   * @param {string} materialProp e.g. 'map' or 'alphaMap'
-   * @param {(THREE.Texture|null)} newTexture
-   */
-  _replaceTexture: function (materialProp, newTexture) {
-    const oldTexture = this.material[materialProp];
-    this.material[materialProp] = newTexture;
-    this.material.needsUpdate = true;
-    if (oldTexture) {
-      oldTexture.dispose();
-    }
-  },
-
-  /**
-   * Sets the z-component of every vector in the position attribute buffer
-   * to the (adjusted) height value from the DEM. Also adjusts the wireframe.
-   * Note:
-   *  positionBuffer.count === the number of vertices in the plane
-   */
-  _updatePositionBuffer: function () {
-    if (!this.heightData) {
+    if (!camera) {
+      console.warn("stereocam could not find PerspectiveCamera");
       return;
     }
 
-    let positionBuffer = this.geometry.getAttribute("position");
-    for (let i = 0; i < positionBuffer.count; i++) {
-      let heightValue = this.heightData[i] / 65535;
-      positionBuffer.setZ(i, heightValue);
+    if (data.eye === "both") {
+      camera.layers.enable(1);
+      camera.layers.enable(2);
+    } else {
+      camera.layers.set(data.eye === "left" ? 1 : 2);
+      camera.layers.enable(0);
     }
-    positionBuffer.needsUpdate = true;
-
-    // Update wireframe
-    let oldWireMesh = this.mesh.getObjectByName("terrain-wireframe");
-    if (oldWireMesh) {
-      oldWireMesh.geometry.dispose();
-      const wireGeometry = new THREE.WireframeGeometry(this.geometry);
-      oldWireMesh.geometry = wireGeometry;
-    }
-    this.el.emit("positionBufferUpdated");
-  },
-
-  /**
-   * Creates or destroys a terrain wireframe mesh.
-   * A wireframe can be useful for debugging or for visualizing a terrain DEM
-   * without a texture.
-   */
-  _toggleWireframe: function () {
-    // TODO: Consider creating wireframe on init and hiding/revealing rather
-    // than creating the wireframe mesh on demand. Cons: wastes resources for
-    // people who don't care about wireframe. Pros: less lag when wireframe is
-    // turned on.
-
-    let oldWireMesh = this.mesh.getObjectByName("terrain-wireframe");
-    if (!oldWireMesh) {
-      // This is a somewhat inelegant way to prevent adding a wireframe when the
-      // component initializes.
-      if (!this.data.wireframe) {
-        return;
-      }
-      // Add wireframe.
-      const wireGeometry = new THREE.WireframeGeometry(this.geometry);
-      const wireMaterial = new THREE.LineBasicMaterial({
-        color: 0x808080,
-        linewidth: 1,
-      });
-      let wireMesh = new THREE.LineSegments(wireGeometry, wireMaterial);
-      wireMesh.name = "terrain-wireframe";
-      wireMesh.material.opacity = 0.3;
-      wireMesh.material.transparent = true;
-      this.mesh.add(wireMesh);
-      return;
-    }
-
-    // Remove wireframe
-    oldWireMesh.geometry.dispose();
-    oldWireMesh.material.dispose();
-    this.mesh.remove(oldWireMesh);
-  },
-
-  remove: function () {
-    this.geometry.dispose();
-    this.material.map.dispose();
-    this.material.alphaMap.dispose();
-    this.material.dispose();
-    if (this.data.wireframe) {
-      this._toggleWireframe();
-    }
-    this.el.removeObject3D("terrain");
   },
 });
 
-},{"./lib/terrainloader.js":3}],3:[function(require,module,exports){
-/**
- * For loading binary data into a 3D terrain model
- * @author Bjorn Sandvik / http://thematicmapping.org/
- */
-
-THREE.TerrainLoader = function (manager) {
-  this.manager = manager !== undefined ? manager : THREE.DefaultLoadingManager;
-};
-
-THREE.TerrainLoader.prototype = {
-  constructor: THREE.TerrainLoader,
-  load: function (url, onLoad, onProgress, onError) {
-    var scope = this;
-    var request = new XMLHttpRequest();
-
-    if (onLoad !== undefined) {
-      request.addEventListener(
-        "load",
-        function (event) {
-          onLoad(new Uint16Array(event.target.response));
-          scope.manager.itemEnd(url);
-        },
-        false
-      );
-    }
-    if (onProgress !== undefined) {
-      request.addEventListener(
-        "progress",
-        function (event) {
-          onProgress(event);
-        },
-        false
-      );
-    }
-    if (onError !== undefined) {
-      request.addEventListener(
-        "error",
-        function (event) {
-          onError(event);
-        },
-        false
-      );
-    }
-    if (this.crossOrigin !== undefined) request.crossOrigin = this.crossOrigin;
-    request.open("GET", url, true);
-    request.responseType = "arraybuffer";
-    request.send(null);
-    scope.manager.itemStart(url);
-  },
-  setCrossOrigin: function (value) {
-    this.crossOrigin = value;
-  },
-};
-
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 (function (global){
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.AFRAME = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(_dereq_,module,exports){
 var str = Object.prototype.toString
