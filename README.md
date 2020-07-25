@@ -35,7 +35,7 @@ Install and use by directly including the [browser files](dist):
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>My A-Frame Scene</title>
     <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-    <!-- TODO: Add jsdelivr link -->
+    <script src="https://unpkg.com/aframe-layers-component@1.0.0/dist/aframe-layers-component.min.js"></script>
   </head>
   <body>
     <a-scene renderer="antialias: true">
