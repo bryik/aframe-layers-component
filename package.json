@@ -1,0 +1,40 @@
+{
+  "name": "aframe-stereocam-component",
+  "version": "1.0.0",
+  "description": "A small component to make meshes meant for one eye (in VR), visible outside of VR.",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify docs/main.js -o docs/build.js",
+    "dev": "budo docs/main.js:build.js --dir docs --port 8000 --live --open",
+    "dev-ssl": "budo docs/main.js:build.js --dir docs --port 8000 --live --open --ssl",
+    "dist": "webpack --config webpack.dev.config.js && webpack --config webpack.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bryik/aframe-stereocam-component.git"
+  },
+  "keywords": [
+    "aframe",
+    "aframe-component",
+    "aframe-vr",
+    "vr",
+    "mozvr",
+    "webvr"
+  ],
+  "author": "bryik <ben@wsundine.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bryik/aframe-stereocam-component/issues"
+  },
+  "homepage": "https://github.com/bryik/aframe-stereocam-component#readme",
+  "devDependencies": {
+    "aframe": "^1.0.4",
+    "browserify": "^16.5.1",
+    "browserify-css": "^0.15.0",
+    "budo": "^11.6.3",
+    "envify": "^4.1.0",
+    "prettier": "^2.0.5",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
+  }
+}
