@@ -1,6 +1,8 @@
 ## aframe-stereocam-component
 
-<img alt="An image split in half. Left side has: a green floor, a blue cube, and a red sphere. Right side has: a green floor, a red sphere, and a yellow cylinder." src="./in-vr.png">
+<p align="center">
+  <img alt="An image split in half. Left side has: a green floor, a blue cube, and a red sphere. Right side has: a green floor, a red sphere, and a yellow cylinder." src="./in-vr.png">
+</p>
 
 This is a small component to make meshes meant to be shown to one eye only (in VR), visible outside of VR.
 
