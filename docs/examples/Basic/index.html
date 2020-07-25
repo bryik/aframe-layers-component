@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>A-Frame Stereocam Component - Basic</title>
     <script src="../../build.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"
+    ></script>
   </head>
   <body>
     <a-scene renderer="antialias: true">
@@ -12,7 +16,8 @@
         stereocam="eye:left" allows the camera to see meshes visible in layer 1
         only.
       -->
-      <a-entity id="camera" camera stereocam="eye:left;"> </a-entity>
+      <a-entity id="camera" camera stereocam="eye:left;" position="0 1.6 0">
+      </a-entity>
 
       <!-- A-Frame hello world -->
       <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
@@ -33,19 +38,43 @@
       <a-sky color="#ECECEC"></a-sky>
     </a-scene>
     <script>
-      const box = document.querySelector("a-box");
-      const cylinder = document.querySelector("a-cylinder");
+      const scene = document.querySelector("a-scene");
 
-      // Make the box visible by the left eye only.
-      setLayer(box, 1);
+      if (scene.hasLoaded) {
+        run();
+      } else {
+        scene.addEventListener("loaded", run);
+      }
 
-      // Make the cylinder visible by the right eye only.
-      setLayer(cylinder, 2);
+      function run() {
+        // Make the box visible to the left eye only and the cylinder
+        // visible to the right eye only.
+        const box = document.querySelector("a-box");
+        const cylinder = document.querySelector("a-cylinder");
+        setLayer(box, 1);
+        setLayer(cylinder, 2);
 
+        // Setup datgui.
+        let guiState = new GuiState();
+        let gui = new dat.GUI();
+
+        // Listen for changes to eye value.
+        const cameraEl = document.getElementById("camera");
+        let eyeController = gui.add(guiState, "eye", ["left", "right", "both"]);
+        eyeController.onChange(function (value) {
+          cameraEl.setAttribute("stereocam", `eye:${value}`);
+        });
+      }
+
+      // Utilities
       function setLayer(el, layer) {
         const mesh = el.getObject3D("mesh");
         mesh.layers.set(layer);
       }
+
+      const GuiState = function () {
+        this.eye = "left";
+      };
     </script>
   </body>
 </html>
