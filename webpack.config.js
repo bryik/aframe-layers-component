@@ -4,7 +4,7 @@ module.exports = {
   mode: "production",
   entry: "./index.js",
   output: {
-    filename: "aframe-stereocam-component.min.js",
+    filename: "aframe-layers-component.min.js",
     path: path.resolve(__dirname, "dist"),
   },
 };

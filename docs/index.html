@@ -3,61 +3,77 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>A-Frame Stereocam Component</title>
-    <style>
-      html {
-        background: #ef2d5e;
-        color: #fafafa;
-        font-family: monospace;
-        font-size: 20px;
-        padding: 10px 20px;
-      }
-      h1 {
-        font-weight: 300;
-      }
-      a.example {
-        color: #fafafa;
-        display: block;
-        padding: 15px 0;
-      }
-      a {
-        color: #fafafa;
-      }
-
-      .github-corner:hover .octo-arm {
-        animation: octocat-wave 560ms ease-in-out;
-      }
-      @keyframes octocat-wave {
-        0%,
-        100% {
-          transform: rotate(0);
-        }
-        20%,
-        60% {
-          transform: rotate(-25deg);
-        }
-        40%,
-        80% {
-          transform: rotate(10deg);
-        }
-      }
-      @media (max-width: 500px) {
-        .github-corner:hover .octo-arm {
-          animation: none;
-        }
-        .github-corner .octo-arm {
-          animation: octocat-wave 560ms ease-in-out;
-        }
-      }
-    </style>
+    <title>A-Frame Layers Component - Demo</title>
+    <script src="../../build.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"
+    ></script>
   </head>
   <body>
-    <h1>A-Frame Stereocam Component</h1>
-    <h3>Examples</h3>
-    <a class="example" href="./examples/Basic/">Basic</a>
+    <a-scene renderer="antialias: true">
+      <a-entity id="camera" camera position="0 1.6 0"> </a-entity>
+
+      <!-- Restrict the box to layer 1 -->
+      <a-box
+        layers="1"
+        position="-1 0.5 -3"
+        rotation="0 45 0"
+        color="#4CC3D9"
+      ></a-box>
+      <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+      <!-- Restrict the cylinder to layer 2 -->
+      <a-cylinder
+        layers="2"
+        position="1 0.75 -3"
+        radius="0.5"
+        height="1.5"
+        color="#FFC65D"
+      ></a-cylinder>
+      <a-plane
+        position="0 0 -4"
+        rotation="-90 0 0"
+        width="4"
+        height="4"
+        color="#7BC8A4"
+      ></a-plane>
+      <a-sky color="#ECECEC"></a-sky>
+    </a-scene>
+    <script>
+      const scene = document.querySelector("a-scene");
+
+      if (scene.hasLoaded) {
+        run();
+      } else {
+        scene.addEventListener("loaded", run);
+      }
+
+      function run() {
+        // Setup datgui.
+        let guiState = new GuiState();
+        let gui = new dat.GUI();
+
+        // Listen for changes to cameraLayers value.
+        const cameraEl = document.getElementById("camera");
+        let layersController = gui.add(guiState, "cameraLayers", [
+          "0",
+          "0, 1",
+          "0, 2",
+          "0, 1, 2",
+        ]);
+        layersController.onChange(function (value) {
+          cameraEl.setAttribute("layers", value);
+        });
+      }
+
+      // Utilities
+      const GuiState = function () {
+        this.cameraLayers = "0";
+      };
+    </script>
 
     <a
-      href="https://github.com/bryik/aframe-stereocam-component"
+      href="https://github.com/bryik/aframe-layers-component"
       class="github-corner"
       aria-label="View source on GitHub"
       ><svg
@@ -65,12 +81,13 @@
         height="80"
         viewBox="0 0 250 250"
         style="
-          fill: #fff;
-          color: #ef2d5e;
+          fill: #151513;
+          color: #fff;
           position: absolute;
           top: 0;
           border: 0;
-          right: 0;
+          left: 0;
+          transform: scale(-1, 1);
         "
         aria-hidden="true"
       >
@@ -86,6 +103,33 @@
           fill="currentColor"
           class="octo-body"
         ></path></svg
-    ></a>
+      ><style>
+        .github-corner:hover .octo-arm {
+          animation: octocat-wave 560ms ease-in-out;
+        }
+        @keyframes octocat-wave {
+          0%,
+          100% {
+            transform: rotate(0);
+          }
+          20%,
+          60% {
+            transform: rotate(-25deg);
+          }
+          40%,
+          80% {
+            transform: rotate(10deg);
+          }
+        }
+        @media (max-width: 500px) {
+          .github-corner:hover .octo-arm {
+            animation: none;
+          }
+          .github-corner .octo-arm {
+            animation: octocat-wave 560ms ease-in-out;
+          }
+        }
+      </style></a
+    >
   </body>
 </html>

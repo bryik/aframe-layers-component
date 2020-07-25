@@ -1,7 +1,7 @@
 {
-  "name": "aframe-stereocam-component",
+  "name": "aframe-layers-component",
   "version": "1.0.0",
-  "description": "A small component to make meshes meant for one eye (in VR), visible outside of VR.",
+  "description": "An A-Frame component for controlling Object3D layers.",
   "main": "index.js",
   "scripts": {
     "build": "browserify docs/main.js -o docs/build.js",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bryik/aframe-stereocam-component.git"
+    "url": "git+https://github.com/bryik/aframe-layers-component.git"
   },
   "keywords": [
     "aframe",
@@ -24,9 +24,9 @@
   "author": "bryik <ben@wsundine.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bryik/aframe-stereocam-component/issues"
+    "url": "https://github.com/bryik/aframe-layers-component/issues"
   },
-  "homepage": "https://github.com/bryik/aframe-stereocam-component#readme",
+  "homepage": "https://github.com/bryik/aframe-layers-component#readme",
   "devDependencies": {
     "aframe": "^1.0.4",
     "browserify": "^16.5.1",
